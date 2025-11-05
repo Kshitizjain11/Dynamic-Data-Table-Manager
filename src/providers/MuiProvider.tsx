@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useMemo } from "react";
 import { toggleThemeMode } from "@/store/slices/uiSlice";
-import {DarkModeO} from '@'
+import { DarkModeOutlined, LightModeOutlined } from "@mui/icons-material";
 export function MuiProvider({ children }: { children: React.ReactNode }) {
   const mode = useSelector((state:RootState)=>state.ui.themeMode)
   const dispatch = useDispatch()
@@ -18,7 +18,7 @@ export function MuiProvider({ children }: { children: React.ReactNode }) {
       <CssBaseline />
       <div style={{ position: "fixed", top: 8, right: 8, zIndex: 1300 }}>
         <IconButton color="inherit" onClick={()=>dispatch(toggleThemeMode())} aria-label="toggle theme" ></IconButton>
-        {mode === "light" ? <DarkModeOutlinedIcon  }
+        {mode === "light" ? <DarkModeOutlined/> : <LightModeOutlined/>   }
       </div>
       {children}
     </ThemeProvider>
