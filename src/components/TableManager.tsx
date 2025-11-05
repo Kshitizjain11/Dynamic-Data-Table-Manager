@@ -32,6 +32,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSearchQuery, toggleSort, setPage } from "@/store/slices/uiSlice";
 import { addColumn, setVisibility, resetToDefaults } from "@/store/slices/columnsSlice";
+import { DndContext, DragEndEvent, DragStartEvent, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
+import { SortableContext, useSortable, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { RowRecord, importRows } from "@/store/slices/dataSlice";
 import Papa from "papaparse";
 import { saveAs } from "file-saver";
@@ -55,6 +58,35 @@ export default function TableManager() {
   const [isEditing, setIsEditing] = React.useState(false);
   const [edited, setEdited] = React.useState<Record<string, RowRecord>>({});
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [activeColId, setActiveColId] = React.useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  function SortableHeaderCell({ colKey, label, isSorted, onSort }: { colKey: string; label: string; isSorted: "asc" | "desc" | null; onSort: () => void }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: colKey });
+    const style: React.CSSProperties = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      cursor: "grab",
+      userSelect: "none",
+      background: isDragging ? "rgba(0,0,0,0.04)" : undefined,
+    };
+    return (
+      <TableCell
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+        style={style}
+        onClick={onSort}
+        title="Drag to reorder. Click to sort."
+      >
+        {label}
+        {isSorted ? (isSorted === "asc" ? " ▲" : " ▼") : ""}
+      </TableCell>
+    );
+  }
 
   const filtered = React.useMemo(() => {
     if (!searchQuery.trim()) return rows;
@@ -184,19 +216,42 @@ export default function TableManager() {
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow>
-                {visibleColumns.map((col) => (
-                  <TableCell
-                    key={col.key}
-                    onClick={() => dispatch(toggleSort(col.key))}
-                    style={{ cursor: "pointer", userSelect: "none" }}
-                  >
-                    {col.label}
-                    {sortBy === col.key ? (sortOrder === "asc" ? " ▲" : " ▼") : ""}
-                  </TableCell>
-                ))}
-                <TableCell width={120}>Actions</TableCell>
-              </TableRow>
+              <DndContext
+                sensors={sensors}
+                onDragStart={(event: DragStartEvent) => setActiveColId(String(event.active.id))}
+                onDragEnd={(event: DragEndEvent) => {
+                  const { active, over } = event;
+                  setActiveColId(null);
+                  if (!over) return;
+                  const source = String(active.id);
+                  const target = String(over.id);
+                  if (source !== target) {
+                    const { reorderColumns } = require("@/store/slices/columnsSlice");
+                    dispatch(reorderColumns({ sourceKey: source, targetKey: target }));
+                  }
+                }}
+                onDragCancel={() => setActiveColId(null)}
+              >
+                <SortableContext items={visibleColumns.map((c) => c.key)} strategy={horizontalListSortingStrategy}>
+                  <TableRow>
+                    {visibleColumns.map((col) => (
+                      <SortableHeaderCell
+                        key={col.key}
+                        colKey={col.key}
+                        label={col.label}
+                        isSorted={sortBy === col.key ? (sortOrder as any) : null}
+                        onSort={() => dispatch(toggleSort(col.key))}
+                      />
+                    ))}
+                    <TableCell width={120}>Actions</TableCell>
+                  </TableRow>
+                </SortableContext>
+                <DragOverlay>
+                  {activeColId ? (
+                    <Paper style={{ padding: 8 }}>{allColumns.find((c) => c.key === activeColId)?.label}</Paper>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             </TableHead>
             <TableBody>
               {paged.map((row) => {

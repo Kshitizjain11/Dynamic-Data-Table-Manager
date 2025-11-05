@@ -51,10 +51,24 @@ const columnsSlice = createSlice({
     resetToDefaults: (state) => {
       state.columns = DEFAULT_COLUMNS;
     },
+    reorderColumns: (
+      state,
+      action: PayloadAction<{ sourceKey: string; targetKey: string }>
+    ) => {
+      const { sourceKey, targetKey } = action.payload;
+      if (sourceKey === targetKey) return;
+      const fromIndex = state.columns.findIndex((c) => c.key === sourceKey);
+      const toIndex = state.columns.findIndex((c) => c.key === targetKey);
+      if (fromIndex === -1 || toIndex === -1) return;
+      const [moved] = state.columns.splice(fromIndex, 1);
+      // insert before target's current index (after removal, adjust if needed)
+      const insertIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+      state.columns.splice(insertIndex, 0, moved);
+    },
   },
 });
 
-export const { toggleVisibility, setVisibility, addColumn, resetToDefaults } = columnsSlice.actions;
+export const { toggleVisibility, setVisibility, addColumn, resetToDefaults, reorderColumns } = columnsSlice.actions;
 export default columnsSlice.reducer;
 
 
