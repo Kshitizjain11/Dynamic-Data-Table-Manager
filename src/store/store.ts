@@ -1,7 +1,13 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import uiSlice from "./slices/uiSlice";
+
+const rootReducer = combineReducers({
+    ui:uiSlice
+})
 
 export const store = configureStore({
-    reducer:{},
+    reducer:rootReducer,
+    middleware:(getDefaultMiddleware)=>getDefaultMiddleware({serializableCheck:false})
 })
 
 export type RootState = ReturnType<typeof store.getState>;
