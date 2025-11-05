@@ -29,11 +29,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* <ReduxProvider> */}
-          {/* <MuiProvider> */}
+        <ReduxProvider>
+          <MuiProvider>
           {children}
-          {/* </MuiProvider> */}
-          {/* </ReduxProvider> */}
+          </MuiProvider>
+          </ReduxProvider>
       </body>
     </html>
   );

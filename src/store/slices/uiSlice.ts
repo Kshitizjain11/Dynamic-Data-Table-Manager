@@ -54,4 +54,4 @@ const uiSlice = createSlice({
 })
 
 export const { setSearchQuery, setSort, toggleSort, setPage, setRowsPerPage, toggleThemeMode } = uiSlice.actions;
-export default uiSlice
+export default uiSlice.reducer
