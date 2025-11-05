@@ -1,8 +1,12 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import uiSlice from "./slices/uiSlice";
+import columnsSlice from "./slices/columnsSlice";
+import dataSlice from "./slices/dataSlice";
 
 const rootReducer = combineReducers({
-    ui:uiSlice
+    ui:uiSlice,
+    columns: columnsSlice,
+    data: dataSlice
 })
 
 export const store = configureStore({
